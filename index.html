@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oblique Force Components Quiz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+        }
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .correct { color: #2ecc71; }
+        .incorrect { color: #e74c3c; }
+        .warning { color: #e67e22; }
+        
+        #canvas-container {
+            margin: 15px 0;
+        }
+        canvas {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        
+        .prompt-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 10px 0 20px 0;
+            background-color: #ecf0f1;
+            padding: 12px;
+            border-radius: 6px;
+            line-height: 1.6;
+        }
+
+        .input-table {
+            width: 100%;
+            margin: 15px 0;
+            border-collapse: collapse;
+        }
+        .input-table td {
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 1.05rem;
+            font-weight: bold;
+            vertical-align: top;
+        }
+        .input-table td:first-child {
+            width: 55%;
+            padding-top: 12px;
+        }
+
+        .lbl-fg { color: #34495e; }   /* Charcoal Dark Grey */
+        .lbl-fy { color: #c0392b; }   /* Crimson Red */
+        .lbl-fn { color: #2980b9; }   /* Ocean Blue */
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            font-size: 1rem;
+            text-align: center;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            box-sizing: border-box;
+            color: #2c3e50;
+            font-weight: bold;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        /* Input field feedback states */
+        input.invalid-input {
+            border: 2px solid #e74c3c !important;
+            background-color: #fadbd8 !important;
+        }
+        input.valid-input {
+            border: 2px solid #2ecc71 !important;
+            background-color: #e8f8f5 !important;
+        }
+        input.rounding-input {
+            border: 2px solid #f39c12 !important;
+            background-color: #fef9e7 !important;
+        }
+
+        .field-msg {
+            font-size: 0.82rem;
+            font-weight: bold;
+            margin-top: 4px;
+            text-align: center;
+            min-height: 16px;
+        }
+        .field-msg.rounding-msg {
+            color: #d35400;
+        }
+        .field-msg.format-msg {
+            color: #e67e22;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #feedback {
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 48px;
+            padding: 0 10px;
+            line-height: 1.6;
+        }
+        .ans-block {
+            font-size: 1.05rem;
+            margin-bottom: 4px;
+        }
+        .continue-msg {
+            font-weight: normal;
+            font-size: 0.95rem;
+            color: #555;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Oblique Force Components Quiz</h2>
+    
+    <div class="score-board">
+        <span class="correct">Correct: <span id="correct-count">0</span></span>
+        <span class="incorrect">Incorrect: <span id="incorrect-count">0</span></span>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="forceCanvas" width="400" height="250"></canvas>
+    </div>
+
+    <div id="problem-prompt" class="prompt-text">
+        Loading problem...
+    </div>
+
+    <table class="input-table">
+        <tr class="lbl-fg">
+            <td>Force of Gravity (F<sub>g</sub>):</td>
+            <td>
+                <input type="text" id="ans-fg" placeholder="e.g. 118 N" autocomplete="off">
+                <div id="msg-fg" class="field-msg"></div>
+            </td>
+        </tr>
+        <tr class="lbl-fy">
+            <td>Upward Component (F<sub>y</sub>):</td>
+            <td>
+                <input type="text" id="ans-fy" placeholder="e.g. 32 N" autocomplete="off">
+                <div id="msg-fy" class="field-msg"></div>
+            </td>
+        </tr>
+        <tr class="lbl-fn">
+            <td>Normal Force (F<sub>N</sub>):</td>
+            <td>
+                <input type="text" id="ans-fn" placeholder="e.g. 86 N" autocomplete="off">
+                <div id="msg-fn" class="field-msg"></div>
+            </td>
+        </tr>
+    </table>
+
+    <button id="submit-btn" onclick="checkAnswer()">Submit Answer</button>
+    <button id="restart-btn" onclick="resetQuiz()" style="background-color: #e67e22;">Restart Quiz</button>
+
+    <div id="feedback"></div>
+</div>
+
+<script>
+    let scoreCorrect = 0;
+    let scoreIncorrect = 0;
+    let sessionUID = "";
+
+    let mass = 0;
+    let fApp = 0;
+    let angleDeg = 0;
+    const g = 9.81;
+
+    let rawFg = 0;
+    let rawFy = 0;
+    let rawFn = 0;
+
+    let targetFg = 0;
+    let targetFy = 0;
+    let targetFn = 0;
+
+    let hasBeenPenalized = false;
+
+    const canvas = document.getElementById('forceCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function init() {
+        sessionUID = Math.floor(1000000 + Math.random() * 9000000).toString();
+        generateQuestion();
+    }
+
+    function resetQuiz() {
+        scoreCorrect = 0;
+        scoreIncorrect = 0;
+        document.getElementById('correct-count').textContent = scoreCorrect;
+        document.getElementById('incorrect-count').textContent = scoreIncorrect;
+        generateQuestion();
+    }
+
+    function generateQuestion() {
+        hasBeenPenalized = false;
+
+        const fields = ['fg', 'fy', 'fn'];
+        fields.forEach(id => {
+            const input = document.getElementById(`ans-${id}`);
+            const msg = document.getElementById(`msg-${id}`);
+            input.value = '';
+            input.disabled = false;
+            input.className = '';
+            msg.innerHTML = '';
+            msg.className = 'field-msg';
+        });
+
+        document.getElementById('feedback').innerHTML = '';
+
+        do {
+            mass = Math.floor(Math.random() * 8) + 8; // 8 to 15 kg range
+            rawFg = mass * g;
+            
+            angleDeg = Math.floor(Math.random() * 26) + 25; // 25° to 50°
+            let angleRad = angleDeg * Math.PI / 180;
+
+            fApp = Math.floor(rawFg * 0.45 + Math.random() * 25); 
+
+            rawFy = fApp * Math.sin(angleRad);
+            rawFn = rawFg - rawFy;
+
+            // Target rounded values calculated directly from raw unrounded values
+            targetFg = Math.round(rawFg);
+            targetFy = Math.round(rawFy);
+            targetFn = Math.round(rawFn);
+        } while (targetFy < 0.40 * targetFg);
+
+        document.getElementById('problem-prompt').innerHTML = 
+            `A ${mass} kg box is pulled at an angle with an ${fApp} N force.<br>` +
+            `Determine the values below to the nearest whole newton.<br>` +
+            `g = 9.81 N/kg`;
+
+        drawDiagram();
+    }
+
+    function drawDiagram() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Security session watermark token
+        ctx.fillStyle = '#b0b6b9';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText("ID: " + sessionUID, canvas.width - 12, 18);
+
+        // Ground profile baseline height
+        let groundY = 135;
+        let blockW = 40;  
+        let blockH = 25;  
+        let blockX = (canvas.width / 2) - (blockW / 2) - 40;
+        let blockY = groundY - blockH;
+
+        let centerX = blockX + blockW / 2;
+
+        let pxPerNewton = 0.65;
+        let arrowHeadSize = 8;
+        let angleRad = angleDeg * Math.PI / 180;
+
+        // Positioned Badge near top frame
+        ctx.fillStyle = '#ebf5fb';
+        ctx.strokeStyle = '#aed6f1';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect((canvas.width / 2) - 65, 14, 130, 28, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#2980b9';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Pull angle: ${angleDeg}°`, canvas.width / 2, 32);
+
+        // Draw Ground Line
+        ctx.strokeStyle = '#2c3e50';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(20, groundY);
+        ctx.lineTo(380, groundY);
+        ctx.stroke();
+
+        // Draw Block Box
+        ctx.strokeStyle = '#34495e';
+        ctx.fillStyle = '#ecf0f1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(blockX, blockY, blockW, blockH);
+        ctx.fill();
+        ctx.stroke();
+
+        // 1. Weight Vector (Fg)
+        let fgLen = targetFg * pxPerNewton;
+        let fgShaftLen = Math.max(0, fgLen - arrowHeadSize);
+        ctx.strokeStyle = '#34495e';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(centerX, blockY + blockH);
+        ctx.lineTo(centerX, blockY + blockH + fgShaftLen);
+        ctx.stroke();
+        drawArrowhead(centerX, blockY + blockH + fgLen, Math.PI / 2, '#34495e');
+
+        // 2. Normal Force Vector (FN)
+        let fnLen = targetFn * pxPerNewton;
+        let fnShaftLen = Math.max(0, fnLen - arrowHeadSize);
+        ctx.strokeStyle = '#2980b9';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(centerX, blockY);
+        ctx.lineTo(centerX, blockY - fnShaftLen);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        drawArrowhead(centerX, blockY - fnLen, -Math.PI / 2, '#2980b9');
+
+        // 3. Oblique Pull Force Line
+        let pullOriginX = blockX + blockW;
+        let pullOriginY = blockY;
+        let pullLen = fApp * pxPerNewton;
+        let pullEndX = pullOriginX + pullLen * Math.cos(-angleRad);
+        let pullEndY = pullOriginY + pullLen * Math.sin(-angleRad);
+        
+        let pullShaftEndX = pullOriginX + (pullLen - arrowHeadSize) * Math.cos(-angleRad);
+        let pullShaftEndY = pullOriginY + (pullLen - arrowHeadSize) * Math.sin(-angleRad);
+
+        ctx.strokeStyle = '#2c3e50';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(pullOriginX, pullOriginY);
+        ctx.lineTo(pullShaftEndX, pullShaftEndY);
+        ctx.stroke();
+        drawArrowhead(pullEndX, pullEndY, -angleRad, '#2c3e50');
+
+        // 4. Horizontal Base Vector Component (Fx)
+        let fxEndX = pullOriginX + pullLen * Math.cos(-angleRad);
+        let fxShaftEndX = pullOriginX + (pullLen * Math.cos(-angleRad)) - arrowHeadSize;
+        ctx.strokeStyle = '#27ae60';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(pullOriginX, pullOriginY);
+        ctx.lineTo(pullShaftEndX, pullOriginY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        drawArrowhead(fxEndX, pullOriginY, 0, '#27ae60');
+
+        // 5. Upward Component Vector (Fy)
+        let fyLen = targetFy * pxPerNewton;
+        let fyShaftLen = Math.max(0, fyLen - arrowHeadSize);
+        ctx.strokeStyle = '#c0392b';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(fxEndX, pullOriginY);
+        ctx.lineTo(fxEndX, pullOriginY - fyShaftLen);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        drawArrowhead(fxEndX, pullOriginY - fyLen, -Math.PI/2, '#c0392b'); 
+    }
+
+    function drawArrowhead(x, y, angle, color) {
+        let headlen = 8;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - headlen * Math.cos(angle - Math.PI / 6), y - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(x - headlen * Math.cos(angle + Math.PI / 6), y - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function parseInput(inputStr) {
+        let clean = inputStr.trim();
+        let strictRegex = /^\d+\s*N$/i;
+        
+        let hasStrictFormat = strictRegex.test(clean);
+        let numericValue = parseInt(clean, 10);
+
+        return {
+            value: numericValue,
+            isValidFormat: hasStrictFormat,
+            raw: clean
+        };
+    }
+
+    function evaluateField(inputValue, rawVal, targetVal) {
+        let parsed = parseInput(inputValue);
+
+        if (parsed.raw === "") {
+            return { status: 'empty', parsed };
+        }
+
+        if (isNaN(parsed.value)) {
+            return { status: 'incorrect', parsed };
+        }
+
+        if (parsed.value === targetVal && parsed.isValidFormat) {
+            return { status: 'correct', parsed };
+        }
+
+        // Check for Rounding Error:
+        // Value is off by exactly 1 from target AND within 1.0 of the true raw unrounded value
+        let diffTarget = Math.abs(parsed.value - targetVal);
+        let diffRaw = Math.abs(parsed.value - rawVal);
+
+        if (diffTarget === 1 && diffRaw < 1.0) {
+            return { status: 'rounding_error', parsed };
+        }
+
+        // Formatting-only error (e.g. missing 'N' unit)
+        if (parsed.value === targetVal && !parsed.isValidFormat) {
+            return { status: 'format_error', parsed };
+        }
+
+        return { status: 'incorrect', parsed };
+    }
+
+    function checkAnswer() {
+        const fields = [
+            { id: 'fg', raw: rawFg, target: targetFg },
+            { id: 'fy', raw: rawFy, target: targetFy },
+            { id: 'fn', raw: rawFn, target: targetFn }
+        ];
+
+        const feedbackElement = document.getElementById('feedback');
+        let results = [];
+        let hasEmpty = false;
+
+        // Reset UI field states
+        fields.forEach(f => {
+            const input = document.getElementById(`ans-${f.id}`);
+            const msg = document.getElementById(`msg-${f.id}`);
+            input.className = '';
+            msg.innerHTML = '';
+            msg.className = 'field-msg';
+
+            let res = evaluateField(input.value, f.raw, f.target);
+            res.fieldId = f.id;
+            results.push(res);
+
+            if (res.status === 'empty') hasEmpty = true;
+        });
+
+        if (hasEmpty) {
+            feedbackElement.innerHTML = '<span class="warning">Please fill out all fields before submitting.</span>';
+            return;
+        }
+
+        let hasIncorrect = results.some(r => r.status === 'incorrect');
+        let hasRounding = results.some(r => r.status === 'rounding_error');
+        let hasFormat = results.some(r => r.status === 'format_error');
+        let allCorrect = results.every(r => r.status === 'correct');
+
+        // Update UI styles per field
+        results.forEach(r => {
+            const input = document.getElementById(`ans-${r.fieldId}`);
+            const msg = document.getElementById(`msg-${r.fieldId}`);
+
+            if (r.status === 'correct') {
+                input.classList.add('valid-input');
+            } else if (r.status === 'rounding_error') {
+                input.classList.add('rounding-input');
+                msg.innerHTML = 'Check your rounding!';
+                msg.classList.add('rounding-msg');
+            } else if (r.status === 'format_error') {
+                input.classList.add('rounding-input');
+                msg.innerHTML = 'Include unit "N"';
+                msg.classList.add('format-msg');
+            } else {
+                input.classList.add('invalid-input');
+            }
+        });
+
+        // Case 1: All correct!
+        if (allCorrect) {
+            if (!hasBeenPenalized) {
+                scoreCorrect++;
+                document.getElementById('correct-count').textContent = scoreCorrect;
+            }
+            feedbackElement.innerHTML = '<span class="correct">Correct! Well done.</span>';
+            setTimeout(generateQuestion, 1600);
+            return;
+        }
+
+        // Case 2: Rounding or format errors ONLY (NO clearly incorrect values) -> DO NOT PENALIZE
+        if (!hasIncorrect && (hasRounding || hasFormat)) {
+            feedbackElement.innerHTML = '<span class="warning">Check the highlighted field(s) for rounding or unit formatting.</span>';
+            return;
+        }
+
+        // Case 3: At least one value is clearly incorrect -> PENALIZE
+        if (!hasBeenPenalized) {
+            scoreIncorrect++;
+            document.getElementById('incorrect-count').textContent = scoreIncorrect;
+            hasBeenPenalized = true;
+        }
+
+        feedbackElement.innerHTML = `
+            <div class="ans-block" style="color: #34495e;">[F<sub>g</sub> = ${targetFg} N]</div>
+            <div class="ans-block" style="color: #c0392b;">[F<sub>y</sub> = ${targetFy} N]</div>
+            <div class="ans-block" style="color: #2980b9;">[F<sub>N</sub> = ${targetFn} N]</div>
+            <div class="continue-msg" style="color: #c0392b; font-weight: bold;">Check highlighted fields and enter the correct values to continue.</div>
+        `;
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
